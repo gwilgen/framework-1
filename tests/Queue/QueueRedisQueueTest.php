@@ -64,7 +64,7 @@ class QueueRedisQueueTest extends PHPUnit_Framework_TestCase
         $queue->expects($this->once())->method('migrateAllExpiredJobs')->with($this->equalTo('queues:default'));
 
         $redis->shouldReceive('connection')->andReturn($redis);
-        $redis->shouldReceive('lpop')->once()->with('queues:default')->andReturn('foo');
+        $redis->shouldReceive('blpop')->once()->with('queues:default', 0)->andReturn(['queues:default', 'foo']);
         $redis->shouldReceive('zadd')->once()->with('queues:default:reserved', 61, 'foo');
 
         $result = $queue->pop();
@@ -107,7 +107,7 @@ class QueueRedisQueueTest extends PHPUnit_Framework_TestCase
         $queue->setExpire(null);
         $queue->expects($this->once())->method('getTime')->will($this->returnValue(1));
         $queue->expects($this->never())->method('migrateAllExpiredJobs');
-        $predis->shouldReceive('lpop')->once()->with('queues:default')->andReturn('foo');
+        $predis->shouldReceive('blpop')->once()->with('queues:default', 1)->andReturn(['queues:default', 'foo']);
         $predis->shouldReceive('zadd')->once()->with('queues:default:reserved', 1, 'foo');
 
         $result = $queue->pop();
@@ -121,7 +121,7 @@ class QueueRedisQueueTest extends PHPUnit_Framework_TestCase
         $queue->setExpire(30);
         $queue->expects($this->once())->method('getTime')->will($this->returnValue(1));
         $queue->expects($this->once())->method('migrateAllExpiredJobs')->with($this->equalTo('queues:default'));
-        $predis->shouldReceive('lpop')->once()->with('queues:default')->andReturn('foo');
+        $predis->shouldReceive('blpop')->once()->with('queues:default', 0)->andReturn(['queues:default', 'foo']);
         $predis->shouldReceive('zadd')->once()->with('queues:default:reserved', 31, 'foo');
 
         $result = $queue->pop();
